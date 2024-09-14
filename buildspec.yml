@@ -1,0 +1,23 @@
+version: 0.2
+
+env:
+  parameter-store:
+    TABLE_NAME: TABLE_NAME
+    REGION: REGION
+    SQS_QUEUE_URL: SQS_QUEUE_URL
+    AWS_ACCOUNT_ID: AWS_ACCOUNT_ID
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - npm install -g serverless
+      - npm install
+  build:
+    commands:
+      - serverless deploy --stage dev
+
+artifacts:
+  files:
+    - "**/*"
