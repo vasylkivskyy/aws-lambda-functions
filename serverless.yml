@@ -1,0 +1,106 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: vovacomp
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: aws-node-rest-api-project
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ${env:REGION}
+  environment:
+    TABLE_NAME: table_name
+    REGION: ${env:REGION}
+    SQS_QUEUE_URL: ${env:SQS_QUEUE_URL}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+      Resource:
+        - arn:aws:dynamodb:${env:REGION}:${env:AWS_ACCOUNT_ID}:table/TodoTable
+    - Effect: Allow
+      Action:
+        - sqs:SendMessage
+      Resource:
+        - arn:aws:sqs:${env:REGION}:${env:AWS_ACCOUNT_ID}:MyQueue
+    - Effect: Allow
+      Action:
+        - sqs:ReceiveMessage
+        - sqs:DeleteMessage
+        - sqs:GetQueueAttributes
+      Resource:
+        - arn:aws:sqs:${env:REGION}:${env:AWS_ACCOUNT_ID}:MyQueue
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+package:
+  excludeDevDependencies: true
+
+functions:
+  addTodo:
+    handler: src/addTodo.handler
+    environment:
+      FUNCTION_MODE: add
+    events:
+      - httpApi:
+          path: /
+          method: post
+  fetchTodos:
+    handler: src/fetchTodos.handler
+    environment:
+      FUNCTION_MODE: addHandler
+    events:
+      - httpApi:
+          path: /todos
+          method: get
+  fetchTodo:
+    handler: src/fetchTodo.handler
+    events:
+      - httpApi:
+          path: /todo/{id}
+          method: get
+  updateTodo:
+    handler: src/updateTodo.handler
+    events:
+      - httpApi:
+          path: /todo/{id}
+          method: put
+  timeTrigger:
+    handler: src/timeTrigger.handler
+    events:
+      - schedule:
+          rate: cron(*/5 * * * ? *)
+          enabled: false
+  sendMessageToSQS:
+    handler: src/sendMessageToSQS.handler
+    events:
+      - httpApi:
+          path: /send
+          method: post
+  readMessageFromSQS:
+    handler: src/readMessageFromSQS.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - MyQueue
+              - Arn
+
+resources:
+  Resources:
+    TodoTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: TodoTable
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+    MyQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: MyQueue
