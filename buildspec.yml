@@ -6,6 +6,8 @@ env:
     REGION: REGION
     SQS_QUEUE_URL: SQS_QUEUE_URL
     AWS_ACCOUNT_ID: AWS_ACCOUNT_ID
+  variables:
+    SERVERLESS_ACCESS_KEY: ${SERVERLESS_ACCESS_KEY}
 
 phases:
   install:
