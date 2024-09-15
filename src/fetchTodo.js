@@ -19,7 +19,7 @@ const fetchTodo = async (event) => {
   }
 
   return {
-    statusCode: 202,
+    statusCode: 203,
     headers: {
       "Content-Type": "application/json",
     },
